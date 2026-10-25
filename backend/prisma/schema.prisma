@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScanStatus {
+  PENDING
+  CLONING
+  ANALYZING
+  EXPLAINING
+  DONE
+  FAILED
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+model Scan {
+  id        String     @id @default(cuid())
+  repoUrl   String
+  status    ScanStatus @default(PENDING)
+  error     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  issues    Issue[]
+}
+
+model Issue {
+  id             String   @id @default(cuid())
+  scan           Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  scanId         String
+  filePath       String
+  line           Int
+  column         Int
+  ruleId         String
+  message        String
+  codeSnippet    String
+  severity       Severity @default(MEDIUM)
+  explanation    String?
+  suggestedFix   String?
+  createdAt      DateTime @default(now())
+
+  @@index([scanId])
+}
